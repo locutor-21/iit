@@ -31,9 +31,9 @@ void build_instr(unsigned int bitstring, Instruction *instr);
 void build_R_format(unsigned int bitstring, struct R_Format *instr);
 void build_I_format(unsigned int bitstring, struct I_Format *instr);
 void build_J_format(unsigned int bitstring, struct J_Format *instr);
-void print_instr(Instruction *instr);
+void print_instr(Instruction *instr, unsigned int address);
 void print_R_format(struct R_Format *instr);
-void print_I_format(byte opcode, struct I_Format *instr);
+void print_I_format(byte opcode, struct I_Format *instr, unsigned int address);
 void print_J_format(byte opcode, struct J_Format *instr);
 
 int main(){
@@ -78,16 +78,17 @@ int main(){
 	printf("Initial program counter = %p\n\n", initial_address);
 
 	//Print output
-	printf("Location     Instruction\n");
+	printf("Location    Instruction\n");
 	for (int i = 0; i < n; ++i)
 	{
-		printf("%0p", initial_address);
+		printf("x%08X", initial_address);
 		//Call print_instr function
-		print_instr(&instr_list[i]);
+		print_instr(&instr_list[i], initial_address);
 		printf("\n");
 		initial_address += 4;
 	}
 
+	printf("\nProgram ending\n");
 	fclose(datafile);
 	fclose(output);
 	return 0;
@@ -200,7 +201,7 @@ void build_J_format(unsigned int bitstring, struct J_Format *instr){
 	instr -> address = (bitstring & 67108863);
 }
 
-void print_instr(Instruction *instr){
+void print_instr(Instruction *instr, unsigned int address){
 	printf("   ");
 	switch(instr -> opcode){
 		case 0:
@@ -213,7 +214,7 @@ void print_instr(Instruction *instr){
 			print_J_format(instr->opcode, &(instr -> j_fmt));
 			break;
 		default:
-			print_I_format(instr->opcode, &(instr -> i_fmt));
+			print_I_format(instr->opcode, &(instr -> i_fmt), address);
 	}
 }
 
@@ -265,9 +266,10 @@ void print_R_format(struct R_Format *instr){
 	set_register(rt, instr->rt);
 
 	printf(" %3s, %3s, %3s", rd, rs, rt);
+	printf("   (s/f: x%02X, x%02X = dec %2d, %2d)", instr->shamt, instr->funct, instr->shamt, instr->funct);
 }
 
-void print_I_format(byte opcode, struct I_Format *instr){
+void print_I_format(byte opcode, struct I_Format *instr, unsigned int address){
 	//Print mnemonic based on opcode
 	switch(opcode){
 		case 8:
@@ -310,7 +312,9 @@ void print_I_format(byte opcode, struct I_Format *instr){
 	set_register(rs, instr->rs);
 	set_register(rt, instr->rt);
 
-	printf(" %3s, %3s, %#06x  : dec %-5d  target = ", rs, rt, instr->immediate, instr->immediate);
+	printf(" %3s, %3s, x%04x  : dec %-6d", rs, rt, (instr->immediate & 0xffff), instr->immediate);
+	if(opcode == 4 || opcode == 5)
+		printf("  target = x%08X", address + 4*(instr->immediate+1));
 }
 
 void print_J_format(byte opcode, struct J_Format *instr){
@@ -325,5 +329,5 @@ void print_J_format(byte opcode, struct J_Format *instr){
 			break;
 	}
 
-	printf(" %#8x", instr->address);
+	printf(" x%07x", instr->address);
 }
