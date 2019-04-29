@@ -50,7 +50,7 @@ int main(){
 	}
 
 	//Declare variables
-	int n, pos;
+	int n;
 	unsigned int initial_address;
 	unsigned int bitstring;
 	Instruction* instr_list;
