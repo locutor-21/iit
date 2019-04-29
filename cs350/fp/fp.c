@@ -1,8 +1,9 @@
 // CS 350, Spring 2019
 //
 // Final Project
+// Done accordingly to Instructions version on 4/28;
 //
-// Illinois Institute of Technology, (c) 2019, James Sasaki
+// Illinois Institute of Technology, Pedro H. Dias
 //
 
 #include <stdio.h>
@@ -25,16 +26,16 @@ struct instruction{
 };
 typedef struct instruction Instruction;
 
-int  num_of_instr(FILE *fp);
-void set_register(char* string, byte num);
-void build_instr(unsigned int bitstring, Instruction *instr);
-void build_R_format(unsigned int bitstring, struct R_Format *instr);
-void build_I_format(unsigned int bitstring, struct I_Format *instr);
-void build_J_format(unsigned int bitstring, struct J_Format *instr);
-void print_instr(Instruction *instr, unsigned int address);
-void print_R_format(struct R_Format *instr);
-void print_I_format(byte opcode, struct I_Format *instr, unsigned int address);
-void print_J_format(byte opcode, struct J_Format *instr);
+int  num_of_instr(FILE *fp); //Returns number of Instructions in data.txt
+void set_register(char* string, byte num); //Set value of string to corresponding name of register
+void build_instr(unsigned int bitstring, Instruction *instr); //Start building general instruction; decides instruction format
+void build_R_format(unsigned int bitstring, struct R_Format *instr); //Build R format
+void build_I_format(unsigned int bitstring, struct I_Format *instr); //Build I format
+void build_J_format(unsigned int bitstring, struct J_Format *instr); //Build J format
+void print_instr(Instruction *instr, unsigned int address); //Decides the instruction format
+void print_R_format(struct R_Format *instr); //Prints R format
+void print_I_format(byte opcode, struct I_Format *instr, unsigned int address); //Prints I format
+void print_J_format(byte opcode, struct J_Format *instr); //Prints J format
 
 int main(){
 	printf("Spring 2019 - CS 350 Final Project for %s\n\n", "Pedro H Dias");
@@ -47,10 +48,6 @@ int main(){
 		printf("; open failed; program ends\n");
 		exit(EXIT_FAILURE);
 	}
-
-	//Opens file that will receive the output
-	char *outputfile_name = "output.txt";
-	FILE *output = fopen(outputfile_name, "w");
 
 	//Declare variables
 	int n, pos;
@@ -75,7 +72,7 @@ int main(){
 	printf("Enter program counter (hex digits):\n");
 	scanf("%x", &initial_address);
 
-	printf("Initial program counter = %p\n\n", initial_address);
+	printf("Initial program counter = x%08X\n\n", initial_address);
 
 	//Print output
 	printf("Location    Instruction\n");
@@ -88,9 +85,9 @@ int main(){
 		initial_address += 4;
 	}
 
+	//Close files and ends program
 	printf("\nProgram ending\n");
 	fclose(datafile);
-	fclose(output);
 	return 0;
 }
 
@@ -237,7 +234,7 @@ void print_R_format(struct R_Format *instr){
 			printf("%-4s", "mul");
 			break;
 		case 0:
-			printf("%-4s", "nop");
+			(instr->shamt == 0) ? (printf("%-4s", "nop")) : (printf("%-4s", "sll"));
 			break;
 		case 39:
 			printf("%-4s", "nor");
@@ -265,8 +262,15 @@ void print_R_format(struct R_Format *instr){
 	set_register(rs, instr->rs);
 	set_register(rt, instr->rt);
 
-	printf(" %3s, %3s, %3s", rd, rs, rt);
-	printf("   (s/f: x%02X, x%02X = dec %2d, %2d)", instr->shamt, instr->funct, instr->shamt, instr->funct);
+	if(instr->funct == 0 && instr->shamt != 0){
+		printf(" %3s, %3s, %3d", rd, rt, instr->shamt);
+		printf("   (rd/f:x%02X, x%02X = dec %2d, %2d)", instr->rd, instr->funct, instr->rd, instr->funct);
+	}
+	else{
+		printf(" %3s, %3s, %3s", rd, rs, rt);
+		printf("   (s/f: x%02X, x%02X = dec %2d, %2d)", instr->shamt, instr->funct, instr->shamt, instr->funct);
+	}
+	
 }
 
 void print_I_format(byte opcode, struct I_Format *instr, unsigned int address){
